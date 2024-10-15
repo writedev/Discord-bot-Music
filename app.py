@@ -1,11 +1,35 @@
 from discord.ext import commands
 import discord
+from dotenv import load_dotenv
+import asyncio
+import os
 
-bot = commands.Bot(intents=discord.Intents.all(), command_prefix="!")
+load_dotenv()
 
-@bot.command()
-async def ping(ctx):
-  await ctx.send("Pong!")
+TOKEN = os.getenv("TOKEN")
 
+class MyBot(commands.Bot):
+  def __init__(self):
+    super().__init__(command_prefix="!", intents=discord.Intents.all())
 
-bot.run("MTI1Mjk5Njc2NTU1NzE5NDgyMg.GxV8f7.Wsj3MsrQgymE5Iv1YaJiww6T6AUMDBe4-b2xlg")
+  async def on_ready(self):
+    print("Bot is ready!")
+
+async def load_commands():
+    for filename in os.listdir("./commands"):
+        if filename.endswith(".py"):
+            # cut off the .py from the file name
+            await bot.load_extension(f"commands.{filename[:-3]}")
+
+async def load_event():
+    for filename in os.listdir("./events"):
+        if filename.endswith(".py"):
+            # cut off the .py from the file name
+            await bot.load_extension(f"events.{filename[:-3]}")
+
+bot = MyBot()
+
+if __name__ == "__main__":
+    asyncio.run(load_commands())
+    asyncio.run(load_event())
+    bot.run(TOKEN)
