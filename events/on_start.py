@@ -7,9 +7,11 @@ class OnStart(commands.Cog):
     self.bot = bot
 
   @commands.Cog.listener()
-  async def setup_hook(self):
-    nodes = [wavelink.Node(uri="http://localhost:2333", password="bye_7")]
-    await wavelink.Pool.connect(nodes=nodes, client=self, cache_capacity=100)
+  async def on_connect(self):
+    url = "http://127.0.0.1:2333"
+    nodes = [wavelink.Node(uri=url, password="bye_7")]
+    await wavelink.Pool.connect(nodes=nodes, client=self.bot, cache_capacity=100)
+    print(f"Connected in lavalink server : {url}")
 
 
 async def setup(bot):
