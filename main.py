@@ -29,6 +29,8 @@ async def load_event():
 
 bot = MyBot()
 
+
+
 if __name__ == "__main__":
     asyncio.run(load_commands())
     asyncio.run(load_event())
