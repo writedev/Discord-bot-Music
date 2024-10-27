@@ -3,13 +3,14 @@ import discord
 from discord.ext.commands import Context
 import wavelink
 from typing import cast
+from datetime import timedelta
 
 
 class Play(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @commands.hybrid_command()
+    @commands.command()
     async def play(self, ctx: Context, *, query):
         player: wavelink.Player
         player = cast(wavelink.Player, ctx.voice_client)
@@ -29,31 +30,29 @@ class Play(commands.Cog):
         else:
             track: wavelink.Playable = tracks[0]
             await player.queue.put_wait(track)
-            await ctx.send(f"Lancement de la chanson **``{track}``**")
+            milli_duree = timedelta(milliseconds=track.length)
+            await ctx.send(f"Lancement de la chanson **``{track}``** faite par {track.author} qui dure {milli_duree} min")
+        
+        # join channel part
+        try:
+            channel_author = ctx.author.voice.channel.id
+            channel_bot = ctx.channel.guild.me.voice.channel.id
 
-        if not player.playing and ctx.guild.me.voice == ctx.guild.me.voice.channel:
-            await player.play(player.queue.get(), volume=12, replace=True)
-        elif ctx.guild.me.voice != ctx.guild.me.voice.channel:
-            await ctx.author.voice.channel.connect
-
-        # Ajout d'un bouton pour arrêter la musique
-        stop_button = discord.ui.Button(label="Arrêter la musique", style=discord.ButtonStyle.danger)
-
-        # Correction : définition correcte du callback asynchrone pour le bouton
-        async def stop_callback(interaction: discord.Interaction):
-            if player.paused == False:
-                await player.pause(not player.paused)
-                await interaction.response.send_message("La musique a été arrêtée.", ephemeral=True)
-            else:
-                await player.pause(not player.paused)
-                await interaction.response.send_message("Aucune musique n'est en cours de lecture.", ephemeral=True)
-
-        stop_button.callback = stop_callback  # Assigne la fonction callback directement
-
-        view = discord.ui.View()
-        view.add_item(stop_button)
-
-        await ctx.send("Contrôles de la musique:", view=view)
+            if channel_author == channel_bot:
+                await player.play(track, volume=20)
+                return await ctx.send("je suis deja dans ton channel")
+            elif channel_author != channel_bot:
+                try:
+                    point_channel = await self.bot.get_channel(channel_author).connect()
+                    await player.play(track, volume=20)
+                    return await ctx.send("le bot est connecté au channel")
+                except discord.ClientException:
+                        await ctx.voice_client.disconnect()
+                        return await ctx.voice_client.connect(point_channel)
+        except AttributeError:
+            await ctx.author.voice.channel.connect()
+            await player.play(track, volume=20)
+            return await ctx.send("je suis connecté dans ton channel")
 
 
 
@@ -64,7 +63,7 @@ class Play(commands.Cog):
             channel_bot = ctx.channel.guild.me.voice.channel.id
 
             if channel_author == channel_bot:
-                return ctx.send("je suis deja dans ton channel")
+                return await ctx.send("je suis deja dans ton channel")
             elif channel_author != channel_bot:
                 try:
                     point_channel = await self.bot.get_channel(channel_author).connect()
@@ -76,14 +75,19 @@ class Play(commands.Cog):
             await ctx.author.voice.channel.connect()
             await ctx.send("je suis connecté dans ton channel")
 
+    @join.error
+    async def join_error(self, ctx, error):
+        if isinstance(error, commands.CommandInvokeError):
+            await ctx.send("tu dois etre dans un channel")
+
+
+
 
     @commands.command()
-    async def test(self, ctx: Context):
-        await ctx.author.voice.channel.connect()
-
-
-    @commands.command()
-    async def dis(self,ctx : Context):
+    async def stop(self,ctx : Context):
+        player: wavelink.Player
+        player = cast(wavelink.Player, ctx.voice_client)
+        await player.stop()
         await ctx.voice_client.disconnect()
 
 async def setup(bot):
