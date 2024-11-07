@@ -1,12 +1,15 @@
 from discord.ext import commands
 import discord
 from dotenv import load_dotenv
+import logging
 import asyncio
 import os
 
 load_dotenv()
 
 TOKEN = os.getenv("TOKEN")
+
+handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 
 class MyBot(commands.Bot):
   def __init__(self):
@@ -32,4 +35,4 @@ bot = MyBot()
 if __name__ == "__main__":
     asyncio.run(load_commands())
     asyncio.run(load_event())
-    bot.run(TOKEN)
+    bot.run(TOKEN, log_handler=handler, log_level=logging.DEBUG)
