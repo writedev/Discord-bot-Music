@@ -3,4 +3,4 @@ __pycache__/
 .venv/
 noUsedCommand/
 noUsedEvent/
-discord.log/
+discord.log
