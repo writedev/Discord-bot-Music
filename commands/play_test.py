@@ -52,7 +52,9 @@ class Play(commands.Cog):
         return_button = discord.ui.Button(label="return",emoji="<:return_button:1303816930402238546>", style=discord.ButtonStyle.green)
 
         async def callback_return_button(interaction : discord.Interaction):
-            await 
+            previous_track = wavelink.Queue.history[-1]
+            print(previous_track)
+            await player.play(previous_track)
             await interaction.response.send_message("Returned", ephemeral=True)
 
         return_button.callback = callback_return_button
@@ -126,15 +128,19 @@ class Play(commands.Cog):
         if isinstance(tracks, wavelink.Playlist):
             embed = discord.Embed(title="Added to queue", description=f"**``{tracks}``** added to queue by {tracks.author}", color=0xa6e712)
             self.master_message_play_command = await ctx.send(embed=embed, view=view)
+            added: int = await player.queue.put_wait(tracks)
         else:
             track: wavelink.Playable = tracks[0]
             milli_duree = timedelta(milliseconds=track.length)
             embed = discord.Embed(title="Added to queue", description=f"**``{track}``** added to queue by {track.author} qui dure {milli_duree} min ", color=0xa6e712)
             self.master_message_play_command = await ctx.send(embed=embed, view=view)
             await player.queue.put_wait(track)
-        
+
+        if not player.playing:
+            # Play now since we aren't playing anything...
+            await player.play(player.queue.get(), volume=30)
         # join channel part
-        try:
+        """try:
             channel_author = ctx.author.voice.channel.id
             channel_bot = ctx.channel.guild.me.voice.channel.id
 
@@ -152,7 +158,7 @@ class Play(commands.Cog):
             await ctx.author.voice.channel.connect()
             await player.play(track, volume=20)
             return await ctx.send("je suis connecté dans ton channel")
-
+        """
 
 
 
