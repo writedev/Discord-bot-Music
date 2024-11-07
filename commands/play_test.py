@@ -52,7 +52,7 @@ class Play(commands.Cog):
         return_button = discord.ui.Button(label="return",emoji="<:return_button:1303816930402238546>", style=discord.ButtonStyle.green)
 
         async def callback_return_button(interaction : discord.Interaction):
-            await player._previous
+            await 
             await interaction.response.send_message("Returned", ephemeral=True)
 
         return_button.callback = callback_return_button
