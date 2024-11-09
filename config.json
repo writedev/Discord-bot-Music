@@ -1,0 +1,23 @@
+{
+  "bot": "TOKEN_BOT",
+  "prefix": "!",
+  "owner": "owner_id",
+  "presence": "/help for commands",
+  "commands": [
+    {
+      "name": "play",
+      "description": "Play a song",
+      "usage": "play [name of the song]"
+    },
+    {
+      "name": "stop",
+      "description": "Stop playing",
+      "usage": "stop"
+    },
+    {
+      "name": "explain music",
+      "description": "explain the utilis of button",
+      "usage": "explain music"
+    }
+  ]
+}

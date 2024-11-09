@@ -17,6 +17,7 @@ class MyBot(commands.Bot):
 
   async def on_ready(self):
     print("Bot is ready!")
+    await self.tree.sync()
 
 async def load_commands():
     for filename in os.listdir("./commands"):

@@ -7,7 +7,7 @@ class Utils(commands.Cog):
         self.bot = bot
 
 
-    @commands.command()
+    @commands.hybrid_command()
     async def ping(self, ctx : commands.Context):
         ping = round(self.bot.latency * 1000)
 
