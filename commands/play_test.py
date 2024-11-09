@@ -150,15 +150,11 @@ class Play(commands.Cog):
                 player = await ctx.author.voice.channel.connect(cls=wavelink.Player)  # type: ignore
             except AttributeError:
                 embed = discord.Embed(title=f"{ctx.author.global_name} You must be in a voice channel to use this command", color=0xa6e712)
-                message = await ctx.send(embed=embed)
-                await asyncio.sleep(5)
-                await message.delete()
+                message = await ctx.send(embed=embed, delete_after=5)
                 return
             except discord.ClientException:
                 embed = discord.Embed(title=f"{ctx.author.mention} I'm already connected to a voice channel ", color=0xa6e712)
-                message = await ctx.send(embed=embed, ephemeral=True)
-                await asyncio.sleep(3)
-                await message.delete()
+                message = await ctx.send(embed=embed, ephemeral=True, delete_after=3)
                 return
 
         # add dj mode
@@ -175,7 +171,9 @@ class Play(commands.Cog):
         else:
             track: wavelink.Playable = tracks[0]
             milli_duree = timedelta(milliseconds=track.length)
-            embed = discord.Embed(title="Added to queue", description=f"**``{track}``** added to queue by {track.author} qui dure {milli_duree} min ", color=0xa6e712)
+            embed = discord.Embed(title="Ajout de la musique quand la piste", description=f"ajout de **``{track}``** par {track.author} d'une durée de {milli_duree} min ", color=0xa6e712)
+            explain_command = f"</explain:{1304902446442877132}>"
+            embed.add_field(name="Information",value=f"Pour plus explication sur les boutons {explain_command}")
             self.master_message_play_command = await ctx.send(embed=embed, view=view)
             await player.queue.put_wait(track)
 
