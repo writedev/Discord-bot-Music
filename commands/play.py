@@ -6,11 +6,6 @@ from typing import cast
 from datetime import timedelta
 import asyncio
 
-
-
-
-
-
 class Play(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -165,15 +160,17 @@ class Play(commands.Cog):
         tracks: wavelink.Search = await wavelink.Playable.search(query)
 
         if isinstance(tracks, wavelink.Playlist):
-            embed = discord.Embed(title="Added to queue", description=f"**``{tracks}``** added to queue by {tracks.author}", color=0xa6e712)
-            self.master_message_play_command = await ctx.send(embed=embed, view=view)
             added: int = await player.queue.put_wait(tracks)
+            embed = discord.Embed(f"Added the playlist **`{tracks.name}`** ({added} songs) to the queue.")
+            
+            self.master_message_play_command = await ctx.send(embed=embed, view=view)
         else:
             track: wavelink.Playable = tracks[0]
             milli_duree = timedelta(milliseconds=track.length)
-            embed = discord.Embed(title="Ajout de la musique quand la piste", description=f"ajout de **``{track}``** par {track.author} d'une durée de {milli_duree} min ", color=0xa6e712)
-            explain_command = f"</explain_play_button:{1304902446442877132}>"
-            embed.add_field(name="Information",value=f"Pour plus explication sur les boutons {explain_command}")
+            embed = discord.Embed(title="Ajout de la musique quand la piste", description=f"ajout de **``{track}``** par {track.author} d'une durée de **``{milli_duree}``** min ", color=0xa6e712)
+            explain_command = f"</explain_play_button:{1304912089558814721}>"
+            # Information part
+            embed.add_field(name="**Information**",value=f"Pour plus explication sur les boutons {explain_command}")
             self.master_message_play_command = await ctx.send(embed=embed, view=view)
             await player.queue.put_wait(track)
 

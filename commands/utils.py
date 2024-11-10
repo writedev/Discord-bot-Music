@@ -19,12 +19,7 @@ class Utils(commands.Cog):
             await interaction.response.send_message(f"Pong! {ping}ms")
         
         button.callback = ping_bouton
-        await ctx.send(f"Pong! {ping}ms", view=view, ephemeral=True)
-
-    @commands.command()
-    async def test(self, ctx : commands.Context):
-        embed = discord.Embed(title=f"@{ctx.author.name}")
-        await ctx.send(embed=embed)
+        await ctx.send(f"Pong! {ping}ms", view=view, ephemeral=True, delete_after=10)
 
 """    @commands.command()
     async def bouton(self,ctx):
