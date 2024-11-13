@@ -20,7 +20,9 @@ class Utils(commands.Cog):
         
         button.callback = ping_bouton
         await ctx.send(f"Pong! {ping}ms", view=view, ephemeral=True, delete_after=10)
-
+        await ctx.send(self.bot.data)
+        volume = self.bot.data + 10
+        await ctx.send(volume)
 """    @commands.command()
     async def bouton(self,ctx):
         # Création du bouton initial

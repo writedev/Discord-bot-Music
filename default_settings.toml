@@ -1,0 +1,9 @@
+[bot.settings] # tuto for configuration of discord bot
+TOKEN = "YOUR_BOT_TOKEN"
+OWER_ID = "OWER_ID"
+
+[bot.lavalink] # tuto for configuration of lavalink
+IP = "YOUR_SERVEUR_IP"
+PORT = "YOUR_SERVEUR_PORT"
+PASSWORD = "YOUR_LAVALINK_SERVEUR_PASSWORD"
+

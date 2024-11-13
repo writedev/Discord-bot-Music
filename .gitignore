@@ -4,3 +4,4 @@ __pycache__/
 noUsedCommand/
 noUsedEvent/
 discord.log
+custom_settings.toml

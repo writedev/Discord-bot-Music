@@ -10,12 +10,14 @@ class Play(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.master_message_play_command = None
+        self.call_user = {}
+
 
     @commands.hybrid_command()
     async def play(self, ctx: Context, *, query):
         player: wavelink.Player
         player = cast(wavelink.Player, ctx.voice_client)
-    
+
         view = discord.ui.View()
 
         # low_volume button
@@ -23,9 +25,9 @@ class Play(commands.Cog):
         low_volume_button = discord.ui.Button(label="volume",emoji="<:low_volume:1304587618947956749>", style=discord.ButtonStyle.green)
 
         async def callback_low_volume_button(interaction : discord.Interaction):
-            self.music_volume = self.music_volume - 10
-            await player.set_volume(self.music_volume)
-            embed=discord.Embed(title=f"Volume has been lowered, the volume is **{self.music_volume}**",color=0xa6e712)
+            volume = player.volume - 10
+            await player.set_volume(volume)
+            embed=discord.Embed(title=f"Volume has been lowered, the volume is **{volume}**",color=0xa6e712)
             await interaction.response.send_message(embed=embed, ephemeral=True, delete_after=5)
 
         low_volume_button.callback = callback_low_volume_button
@@ -35,9 +37,9 @@ class Play(commands.Cog):
         high_volume_button = discord.ui.Button(label="volume",emoji="<:hight_volume:1304587386407227392>", style=discord.ButtonStyle.green)
 
         async def callback_high_volume_button(interaction : discord.Interaction):
-            self.music_volume = self.music_volume + 10
-            await player.set_volume(self.music_volume)
-            embed=discord.Embed(title=f"Volume has been, the volume is **{self.music_volume}**",color=0xa6e712)
+            volume = player.volume + 10
+            await player.set_volume(volume)
+            embed=discord.Embed(title=f"Volume has been, the volume is **{volume}**",color=0xa6e712)
             await interaction.response.send_message(embed=embed, ephemeral=True, delete_after=5)
 
         high_volume_button.callback = callback_high_volume_button
@@ -60,8 +62,14 @@ class Play(commands.Cog):
         skip_button = discord.ui.Button(label="skip ",emoji="<:skip_button:1303784286603972679>", style=discord.ButtonStyle.green)
 
         async def callback_skip_button(interaction : discord.Interaction):
-            await player.skip()
-            await interaction.response.send_message("Skipped", ephemeral=True, delete_after=5)
+            try:
+                if not player.queue:
+                    await interaction.response.send_message("Il n'y a pas de musique après celle-ci", ephemeral=True, delete_after=5)
+                else:
+                    await player.skip()
+                    await interaction.response.send_message("Skipped", ephemeral=True, delete_after=5)
+            except Exception as e:
+                await interaction.response.send_message("Il n'y a pas de musique à passer", ephemeral=True, delete_after=5)
 
         skip_button.callback = callback_skip_button
 
@@ -70,16 +78,16 @@ class Play(commands.Cog):
         return_button = discord.ui.Button(label="return",emoji="<:return_button:1303816930402238546>", style=discord.ButtonStyle.green)
 
         async def callback_return_button(interaction : discord.Interaction):
-            previous_track = wavelink.Queue.history[-1]
-            print(previous_track)
+            previous_track = player.queue.history[-1]
+            print(f"previous track : {previous_track}")
             await player.play(previous_track)
-            await interaction.response.send_message("Returned", ephemeral=True, delete_after=5)
+            await interaction.response.send_message(f"Returned and {track.title}", ephemeral=True, delete_after=5)
 
         return_button.callback = callback_return_button
 
         # autoplay button
 
-        dj_button = discord.ui.Button(label="Disable DJ mode",emoji="<:dj_button:1303814947242770436>", style=discord.ButtonStyle.red)
+        dj_button = discord.ui.Button(label="DJ mode",emoji="<:dj_button:1303814947242770436>", style=discord.ButtonStyle.primary)
 
         async def callback_enable_autoplay_button(interaction : discord.Interaction):
             embed=discord.Embed(title="Autoplay mode has been enabled",color=0xa6e712)
@@ -96,12 +104,12 @@ class Play(commands.Cog):
             embed=discord.Embed(title="Autoplay mode has been disabled",color=0xa6e712)
             player.autoplay = wavelink.AutoPlayMode.disabled
             dj_button.style = discord.ButtonStyle.primary
+            dj_button.callback = callback_enable_autoplay_button
             dj_button.label = "DJ mode"
             await interaction.message.edit(view=view)
             await interaction.response.send_message(embed=embed,ephemeral=True, delete_after=5)
-            dj_button.callback = callback_enable_autoplay_button
 
-        dj_button.callback = callback_disable_autoplay_button
+        dj_button.callback = callback_enable_autoplay_button
         
         # pause button
 
@@ -142,22 +150,23 @@ class Play(commands.Cog):
 
         if not player:
             try:
+                self.call_user[ctx.author.id]
                 player = await ctx.author.voice.channel.connect(cls=wavelink.Player)  # type: ignore
+                voice_client = player
+                self.call_user[ctx.author.id] = voice_client
             except AttributeError:
                 embed = discord.Embed(title=f"{ctx.author.global_name} You must be in a voice channel to use this command", color=0xa6e712)
-                message = await ctx.send(embed=embed, delete_after=5)
+                await ctx.send(embed=embed, delete_after=5)
                 return
             except discord.ClientException:
                 embed = discord.Embed(title=f"{ctx.author.mention} I'm already connected to a voice channel ", color=0xa6e712)
-                message = await ctx.send(embed=embed, ephemeral=True, delete_after=3)
-                return
-
-        # add dj mode
-        player.autoplay = wavelink.AutoPlayMode.disabled
-
+                return await ctx.send(embed=embed, ephemeral=True, delete_after=3)
         # Add track to player
 
         tracks: wavelink.Search = await wavelink.Playable.search(query)
+
+        # add dj mode
+        player.autoplay = wavelink.AutoPlayMode.disabled
 
         if isinstance(tracks, wavelink.Playlist):
             added: int = await player.queue.put_wait(tracks)
@@ -170,14 +179,27 @@ class Play(commands.Cog):
             embed = discord.Embed(title="Ajout de la musique quand la piste", description=f"ajout de **``{track}``** par {track.author} d'une durée de **``{milli_duree}``** min ", color=0xa6e712)
             explain_command = f"</explain_play_button:{1304912089558814721}>"
             # Information part
-            embed.add_field(name="**Information**",value=f"Pour plus explication sur les boutons {explain_command}")
+            embed.add_field(name="**Information**",value=f"Pour avoir des explication sur les boutons : \n {explain_command}")
             self.master_message_play_command = await ctx.send(embed=embed, view=view)
             await player.queue.put_wait(track)
 
         if not player.playing:
             # Play now since we aren't playing anything...
             self.music_volume = 20
-            await player.play(player.queue.get(), volume=self.music_volume)
+            await player.play(player.queue.get(), volume=20)
+
+
+    @commands.Cog.listener()
+    async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+        if member.id in self.call_user:
+            voice_client = self.call_user[member.id]
+            if before.channel is not None and after.channel is None:  # Vérifie si l'utilisateur quitte le canal
+                await voice_client.disconnect()  # Déconnecte le bot
+                del self.call_user[member.id]  # Retire l'utilisateur du dictionnaire
+                print(f"Le bot s'est déconnecté car {member.display_name} a quitté le canal vocal.")
+
+
+
 
         # join channel part
         """try:
@@ -193,13 +215,19 @@ class Play(commands.Cog):
                     return await ctx.send("le bot est connecté au channel")
                 except discord.ClientException:
                         await ctx.voice_client.disconnect()
-                        return await ctx.voice_client.connect(point_channel)
-        except AttributeError:
-            await ctx.author.voice.channel.connect()
-            await player.play(track, volume=20)
-            return await ctx.send("je suis connecté dans ton channel")
-        """       
-
+                        return await ctx.voice_client.connect(point_channel) """
+"""     
+        # ancienne version      if not player:
+            try:
+                player = await ctx.author.voice.channel.connect(cls=wavelink.Player)  # type: ignore
+            except AttributeError:
+                embed = discord.Embed(title=f"{ctx.author.global_name} You must be in a voice channel to use this command", color=0xa6e712)
+                await ctx.send(embed=embed, delete_after=5)
+                return
+            except discord.ClientException:
+                embed = discord.Embed(title=f"{ctx.author.mention} I'm already connected to a voice channel ", color=0xa6e712)
+                return await ctx.send(embed=embed, ephemeral=True, delete_after=3)
+"""
 
 async def setup(bot):
     await bot.add_cog(Play(bot))

@@ -1,15 +1,18 @@
 from discord.ext import commands
 import discord
-from dotenv import load_dotenv
 import logging
 import asyncio
 import os
+from dotenv import load_dotenv
 
 load_dotenv()
 
 TOKEN = os.getenv("TOKEN")
 
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+
+
+# bot part
 
 class MyBot(commands.Bot):
   def __init__(self):
@@ -18,6 +21,9 @@ class MyBot(commands.Bot):
   async def on_ready(self):
     print("Bot is ready!")
     await self.tree.sync()
+    self.volume = 15
+
+# loading folder part
 
 async def load_commands():
     for filename in os.listdir("./commands"):
@@ -33,7 +39,9 @@ async def load_event():
 
 bot = MyBot()
 
+# start of bot part
+
 if __name__ == "__main__":
     asyncio.run(load_commands())
     asyncio.run(load_event())
-    bot.run(TOKEN, log_handler=handler, log_level=logging.DEBUG)
+    bot.run(token=TOKEN, log_handler=handler, log_level=logging.DEBUG)
