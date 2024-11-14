@@ -38,6 +38,10 @@ class Play(commands.Cog):
 
         async def callback_high_volume_button(interaction : discord.Interaction):
             volume = player.volume + 10
+            if volume > 150:
+                volume = 150
+            elif volume < 0:
+                volume = 0
             await player.set_volume(volume)
             embed=discord.Embed(title=f"Volume has been, the volume is **{volume}**",color=0xa6e712)
             await interaction.response.send_message(embed=embed, ephemeral=True, delete_after=5)
@@ -62,14 +66,14 @@ class Play(commands.Cog):
         skip_button = discord.ui.Button(label="skip ",emoji="<:skip_button:1303784286603972679>", style=discord.ButtonStyle.green)
 
         async def callback_skip_button(interaction : discord.Interaction):
-            try:
-                if not player.queue:
-                    await interaction.response.send_message("Il n'y a pas de musique après celle-ci", ephemeral=True, delete_after=5)
-                else:
-                    await player.skip()
-                    await interaction.response.send_message("Skipped", ephemeral=True, delete_after=5)
-            except Exception as e:
-                await interaction.response.send_message("Il n'y a pas de musique à passer", ephemeral=True, delete_after=5)
+            if player and player.queue.is_empty:
+                if player.autoplay == wavelink.AutoPlayMode.disabled:
+                    await interaction.response.send_message("```⛔ Autoplay is disabled.```")
+                elif player.autoplay == wavelink.AutoPlayMode.enabled:
+                    await player.skip(force=True)
+                    await interaction.response.send_message("```Skipped the current song.```")
+            else:
+                await interaction.response.send_message("```⛔ Nothing is currently playing.```")
 
         skip_button.callback = callback_skip_button
 

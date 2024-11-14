@@ -3,6 +3,7 @@ from discord.ext.commands import Context
 import discord
 from typing import cast
 import wavelink
+from datetime import timedelta
 
 
 class MusiqueControl(commands.Cog):
@@ -34,25 +35,24 @@ class MusiqueControl(commands.Cog):
             await ctx.send("tu dois etre dans un channel")
 
 
-    @commands.hybrid_command(aliases=["dc", "dis","stop"])
-    async def disconnect(self, ctx: Context):
-        player: wavelink.Player
-        player = cast(wavelink.Player, ctx.voice_client)
-        await ctx.voice_client.disconnect()
-        await player.stop()
-        embed = discord.Embed(description="The player has been stopped",color=0xa6e712 )
-        await ctx.send(embed=embed, ephemeral=True, delete_after=5)
-
-
     @commands.hybrid_command(aliases=["info_music", "play_info"])
     async def music_info(self, ctx: Context):
         player : wavelink.Player
         player = cast(wavelink.Player, ctx.voice_client)
+        # calcul time of music and position
+        duration = str(timedelta(milliseconds=player.current.length))
         music_image = player.current.artwork
-        music_title= player.current.title
-        music_author = player.current.author
-        embed = discord.Embed(title="Music info",description=f"{music_title} by {music_author}",color=0xa6e712 )
+        # music info
+        music_title= f"`{player.current.title}`"
+        music_author = f"`{player.current.author}`"
+        # ajout dans l'embed
+        embed = discord.Embed(title="Music info 🎼",description=f"{music_title} **by** {music_author}",color=0xa6e712 )
         embed.set_thumbnail(url=music_image)
+        embed.add_field(name="Titre ✨", value=f"`{music_title}`", inline=False) #music_title, inline=False)
+        embed.add_field(name="Auteur ✍️", value=music_author, inline=True)
+        embed.add_field(name="Durée 🕰️", value=f"`{duration}`", inline=True)
+        embed.add_field(name="Volume 🔊", value=f"`{player.volume}%`", inline=False)
+        embed.add_field(name="URL 🔗", value=f"[Cliquez ici]({player.current.uri})", inline=False)
         await ctx.send(embed=embed, ephemeral=True, delete_after=10)
     
     @commands.hybrid_command(name="previous")
@@ -67,9 +67,13 @@ class MusiqueControl(commands.Cog):
     @commands.hybrid_command(name="skip", description="Skip a song.")
     async def _skip(self, ctx):
         player: wavelink.Player = ctx.guild.voice_client
-        if player and player.playing == True:
-            await player.stop(force=True)
-            await ctx.send("```Skipped the current song.```")
+
+        if player and player.queue.is_empty:
+            if player.autoplay == wavelink.AutoPlayMode.disabled:
+                await ctx.send("```⛔ Autoplay is disabled.```")
+            elif player.autoplay == wavelink.AutoPlayMode.enabled:
+                await player.skip(force=True)
+                await ctx.send("```Skipped the current song.```")
         else:
             await ctx.send("```⛔ Nothing is currently playing.```")
 
@@ -77,13 +81,24 @@ class MusiqueControl(commands.Cog):
     async def change_volume(self, ctx: Context, volume: int):
         player: wavelink.Player = ctx.guild.voice_client
         if volume > 150:
-            await ctx.send("```⛔ Volume must be between 0 and 150.```")
-        elif player and player.playing == True:
+            volume = 150
+        elif volume < 0:
+            volume = 0
+        if player and player.playing == True:
             await player.set_volume(volume)
             await ctx.send(f"```Changed volume to {volume}%```")
         else:
             await ctx.send("```⛔ Nothing is currently playing.```")
-    
+
+    @commands.hybrid_command(name="stop", aliases=["disconnect", "dc"])
+    async def stop(self, ctx: Context):
+        player: wavelink.Player = ctx.guild.voice_client
+        if player and player.playing == True:
+            await player.stop()
+            await ctx.send("```Stopped the player.```")
+        else:
+            await ctx.send("```⛔ Nothing is currently playing.```")
+
 """    @commands.hybrid_command(aliases=["next"])
     async def skip(self, ctx: Context):
         player: wavelink.Player
