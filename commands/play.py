@@ -148,19 +148,21 @@ class Play(commands.Cog):
         view.add_item(low_volume_button)
         view.add_item(high_volume_button)
 
-        if not player:
+        # Vérifie si l'utilisateur est déjà dans le dictionnaire pour éviter les erreurs
+        if ctx.author.id not in self.call_user:
             try:
-                self.call_user[ctx.author.id]
-                player = await ctx.author.voice.channel.connect(cls=wavelink.Player)  # type: ignore
-                voice_client = player
-                self.call_user[ctx.author.id] = voice_client
+                player = await ctx.author.voice.channel.connect(cls=wavelink.Player)  # Connecte le bot
+                self.call_user[ctx.author.id] = player  # Ajoute l'utilisateur au dictionnaire
             except AttributeError:
                 embed = discord.Embed(title=f"{ctx.author.global_name} You must be in a voice channel to use this command", color=0xa6e712)
                 await ctx.send(embed=embed, delete_after=5)
                 return
             except discord.ClientException:
-                embed = discord.Embed(title=f"{ctx.author.mention} I'm already connected to a voice channel ", color=0xa6e712)
-                return await ctx.send(embed=embed, ephemeral=True, delete_after=3)
+                embed = discord.Embed(title=f"{ctx.author.mention} I'm already connected to a voice channel", color=0xa6e712)
+                await ctx.send(embed=embed, delete_after=3)
+                return
+        else:
+            player = self.call_user[ctx.author.id]  # Récupère l'instance du joueur existant si déjà connecté
         # Add track to player
 
         tracks: wavelink.Search = await wavelink.Playable.search(query)
@@ -175,7 +177,7 @@ class Play(commands.Cog):
             self.master_message_play_command = await ctx.send(embed=embed, view=view)
         else:
             track: wavelink.Playable = tracks[0]
-            milli_duree = timedelta(milliseconds=track.length)
+            milli_duree = str(timedelta(milliseconds=track.length))
             embed = discord.Embed(title="Ajout de la musique quand la piste", description=f"ajout de **``{track}``** par {track.author} d'une durée de **``{milli_duree}``** min ", color=0xa6e712)
             explain_command = f"</explain_play_button:{1304912089558814721}>"
             # Information part
@@ -185,7 +187,6 @@ class Play(commands.Cog):
 
         if not player.playing:
             # Play now since we aren't playing anything...
-            self.music_volume = 20
             await player.play(player.queue.get(), volume=20)
 
 
@@ -197,37 +198,6 @@ class Play(commands.Cog):
                 await voice_client.disconnect()  # Déconnecte le bot
                 del self.call_user[member.id]  # Retire l'utilisateur du dictionnaire
                 print(f"Le bot s'est déconnecté car {member.display_name} a quitté le canal vocal.")
-
-
-
-
-        # join channel part
-        """try:
-            channel_author = ctx.author.voice.channel.id
-            channel_bot = ctx.channel.guild.me.voice.channel.id
-
-            if channel_author == channel_bot:
-                return await player.play(track, volume=20)
-            elif channel_author != channel_bot:
-                try:
-                    point_channel = await self.bot.get_channel(channel_author).connect()
-                    await player.play(track, volume=20)
-                    return await ctx.send("le bot est connecté au channel")
-                except discord.ClientException:
-                        await ctx.voice_client.disconnect()
-                        return await ctx.voice_client.connect(point_channel) """
-"""     
-        # ancienne version      if not player:
-            try:
-                player = await ctx.author.voice.channel.connect(cls=wavelink.Player)  # type: ignore
-            except AttributeError:
-                embed = discord.Embed(title=f"{ctx.author.global_name} You must be in a voice channel to use this command", color=0xa6e712)
-                await ctx.send(embed=embed, delete_after=5)
-                return
-            except discord.ClientException:
-                embed = discord.Embed(title=f"{ctx.author.mention} I'm already connected to a voice channel ", color=0xa6e712)
-                return await ctx.send(embed=embed, ephemeral=True, delete_after=3)
-"""
 
 async def setup(bot):
     await bot.add_cog(Play(bot))

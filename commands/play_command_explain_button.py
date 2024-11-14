@@ -22,7 +22,7 @@ class ExplainButtonView(discord.ui.View):
 
     # button pause
 
-    @discord.ui.button(label="pause(explain)",emoji="<:pause_button:1303776999864799313>", style=discord.ButtonStyle.green)
+    @discord.ui.button(label="pause (explain)",emoji="<:pause_button:1303776999864799313>", style=discord.ButtonStyle.green)
     async def callback_pause_button(self, interaction : discord.Interaction, button: discord.ui.Button):
         embed = discord.Embed(description="Ce bouton met la musique en pause", color=0xa6e712)
         await interaction.response.send_message(embed=embed,ephemeral=True, delete_after=5)

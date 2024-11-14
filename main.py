@@ -21,7 +21,6 @@ class MyBot(commands.Bot):
   async def on_ready(self):
     print("Bot is ready!")
     await self.tree.sync()
-    self.volume = 15
 
 # loading folder part
 
