@@ -10,31 +10,6 @@ class MusiqueControl(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @commands.hybrid_command()
-    async def join(self, ctx: Context):
-        try:
-            channel_author = ctx.author.voice.channel.id
-            channel_bot = ctx.channel.guild.me.voice.channel.id
-
-            if channel_author == channel_bot:
-                return await ctx.send("je suis deja dans ton channel")
-            elif channel_author != channel_bot:
-                try:
-                    point_channel = await self.bot.get_channel(channel_author).connect()
-                    return await ctx.send("le bot est connecté au channel")
-                except discord.ClientException:
-                        await ctx.voice_client.disconnect()
-                        return await ctx.voice_client.connect(point_channel)
-        except AttributeError:
-            await ctx.author.voice.channel.connect()
-            await ctx.send("je suis connecté dans ton channel")
-
-    @join.error
-    async def join_error(self, ctx, error):
-        if isinstance(error, commands.CommandInvokeError):
-            await ctx.send("tu dois etre dans un channel")
-
-
     @commands.hybrid_command(aliases=["info_music", "play_info"])
     async def music_info(self, ctx: Context):
         player : wavelink.Player
@@ -46,7 +21,7 @@ class MusiqueControl(commands.Cog):
         music_title= f"`{player.current.title}`"
         music_author = f"`{player.current.author}`"
         # ajout dans l'embed
-        embed = discord.Embed(title="Music info 🎼",color=0xa6e712 )
+        embed = discord.Embed(color=0xa6e712 )
         embed.set_thumbnail(url=music_image)
         embed.add_field(name="Titre ✨", value=f"`{music_title}`", inline=True) #music_title, inline=False)
         embed.add_field(name="Auteur ✍️", value=music_author, inline=True)
@@ -70,7 +45,7 @@ class MusiqueControl(commands.Cog):
 
         if player and player.queue.is_empty:
             if player.autoplay == wavelink.AutoPlayMode.disabled:
-                await ctx.send("```⛔ Autoplay is disabled.```")
+                await ctx.send("```⛔ Dj mode is disabled.```")
             elif not player.queue.is_empty:
                 await player.skip()
             elif player.autoplay == wavelink.AutoPlayMode.enabled:
@@ -94,7 +69,7 @@ class MusiqueControl(commands.Cog):
             embed = discord.Embed(description="❌ Nothing is currently playing.",color=0xa6e712)
             await ctx.send(embed=embed, ephemeral=True, delete_after=5)
 
-    @commands.hybrid_command(name="stop", aliases=["disconnect", "dc"])
+    @commands.hybrid_command(name="stop")
     async def stop(self, ctx: Context):
         player: wavelink.Player = ctx.guild.voice_client
         if player and player.playing == True:
@@ -105,12 +80,22 @@ class MusiqueControl(commands.Cog):
             embed = discord .Embed( description="❌ Nothing is currently playing.",color=0xa6e712)
             await ctx.send(embed=embed, ephemeral=True, delete_after=5)
 
+    @commands.hybrid_command(name="disconnect", aliases=["dc","dis"])
+    async def disconnect(self, ctx: Context):
+        if ctx.voice_client:
+            await ctx.voice_client.disconnect(force=True)
+            embed = discord.Embed(description="The player has been disconnected ✅",color=0xa6e712)
+            await ctx.send(embed=embed, ephemeral=True, delete_after=5)
+        else:
+            embed = discord.Embed(description="❌ Nothing is currently connected.",color=0xa6e712)
+            await ctx.send(embed=embed, ephemeral=True, delete_after=5)
+
+
     @commands.hybrid_command(name="explain_active_dj_mode")
     async def explain_active_dj_mode(self, ctx: Context):
         embed = discord.Embed(title="Explain active dj mode", color=0xa6e712)
         embed.set_image(url="https://i.imgur.com/vxKHn2Q.png")
         await ctx.send(embed=embed,)
-
 
 """    @commands.hybrid_command(aliases=["next"])
     async def skip(self, ctx: Context):

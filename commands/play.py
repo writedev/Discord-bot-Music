@@ -158,11 +158,11 @@ class Play(commands.Cog):
                 player = await ctx.author.voice.channel.connect(cls=wavelink.Player)  # Connecte le bot
                 self.call_user[ctx.author.id] = player  # Ajoute l'utilisateur au dictionnaire
             except AttributeError:
-                embed = discord.Embed(title=f"{ctx.author.global_name} You must be in a voice channel to use this command", color=0xa6e712)
+                embed = discord.Embed(description=f"{ctx.author.mention} You must be in a voice channel to use this command", color=0xa6e712)
                 await ctx.send(embed=embed, delete_after=5)
                 return
             except discord.ClientException:
-                embed = discord.Embed(title=f"{ctx.author.mention} I'm already connected to a voice channel", color=0xa6e712)
+                embed = discord.Embed(description=f"{ctx.author.mention} I'm already connected to a voice channel", color=0xa6e712)
                 await ctx.send(embed=embed, delete_after=3)
                 return
         else:
@@ -182,7 +182,7 @@ class Play(commands.Cog):
         else:
             track: wavelink.Playable = tracks[0]
             milli_duree = str(timedelta(milliseconds=track.length))
-            embed = discord.Embed(title="Ajout de la musique quand la piste", description=f"ajout de **``{track}``** par {track.author} d'une durée de **``{milli_duree}``** min ", color=0xa6e712)
+            embed = discord.Embed(title="Ajout de la musique quand la piste", description=f"ajout de **``{track}``** par **``{track.author}``** d'une durée de **``{milli_duree}``** min ", color=0xa6e712)
             explain_command = f"</explain_play_button:{1304912089558814721}>"
             # Information part
             embed.add_field(name="**Information**",value=f"Pour avoir des explication sur les boutons : \n {explain_command}")
@@ -201,7 +201,39 @@ class Play(commands.Cog):
             if before.channel is not None and after.channel is None:  # Vérifie si l'utilisateur quitte le canal
                 await voice_client.disconnect()  # Déconnecte le bot
                 del self.call_user[member.id]  # Retire l'utilisateur du dictionnaire
-                print(f"Le bot s'est déconnecté car {member.display_name} a quitté le canal vocal.")
+
+
+    @commands.hybrid_command(name="join", aliases=["connect"])
+    async def join(self, ctx: Context):
+        if ctx.author.id in self.call_user:
+            embed = discord.Embed(
+                description=f"{ctx.author.mention} You are already connected to a voice channel ✅",
+                color=0xa6e712,
+            )
+            await ctx.send(embed=embed, delete_after=3)
+            return
+
+        try:
+            voice_channel = ctx.author.voice.channel
+            voice_client = await voice_channel.connect()  # Connecte le bot au salon vocal
+            self.call_user[ctx.author.id] = voice_client  # Associe l'utilisateur au client vocal
+            embed = discord.Embed(
+                description=f"{ctx.author.mention} I'm connected to the voice channel **{voice_channel.name}** ✅",
+                color=0xa6e712,
+            )
+            await ctx.send(embed=embed, delete_after=3)
+        except AttributeError:
+            embed = discord.Embed(
+                description=f"{ctx.author.mention} You must be in a voice channel to use this command.",
+                color=0xa6e712,
+            )
+            await ctx.send(embed=embed, delete_after=5)
+        except discord.ClientException:
+            embed = discord.Embed(
+                description=f"{ctx.author.mention} I'm already connected to a voice channel.",
+                color=0xa6e712,
+            )
+            await ctx.send(embed=embed, delete_after=3)
 
 async def setup(bot):
     await bot.add_cog(Play(bot))
