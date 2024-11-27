@@ -27,7 +27,7 @@ class Play(commands.Cog):
         async def callback_low_volume_button(interaction : discord.Interaction):
             volume = player.volume - 10
             await player.set_volume(volume)
-            embed=discord.Embed(title=f"Volume has been lowered, the volume is **{volume}**",color=0xa6e712)
+            embed=discord.Embed(title=f"Volume has been lowered, the volume is **{volume}**",color=discord.Color.blue())
             await interaction.response.send_message(embed=embed, ephemeral=True, delete_after=5)
 
         low_volume_button.callback = callback_low_volume_button
@@ -43,7 +43,7 @@ class Play(commands.Cog):
             elif volume < 0:
                 volume = 0
             await player.set_volume(volume)
-            embed=discord.Embed(title=f"Volume has been, the volume is **{volume}**",color=0xa6e712)
+            embed=discord.Embed(title=f"Volume has been, the volume is **{volume}**",color=discord.Color.blue())
             await interaction.response.send_message(embed=embed, ephemeral=True, delete_after=5)
 
         high_volume_button.callback = callback_high_volume_button
@@ -53,7 +53,7 @@ class Play(commands.Cog):
         stop_button = discord.ui.Button(label="stop",emoji="<:stop_button:1303776558833467392>", style=discord.ButtonStyle.red)
 
         async def callback_stop_button(interaction : discord.Interaction):
-            embed = discord.Embed(title="Stopped", description="The player has been stopped",color=0xa6e712)
+            embed = discord.Embed(title="Stopped", description="The player has been stopped",color=discord.Color.blue())
             await interaction.response.send_message(embed=embed, ephemeral=True, delete_after=5)
             await player.stop()
             await interaction.guild.voice_client.disconnect()
@@ -94,7 +94,7 @@ class Play(commands.Cog):
         dj_button = discord.ui.Button(label="DJ mode",emoji="<:dj_button:1303814947242770436>", style=discord.ButtonStyle.primary)
 
         async def callback_enable_autoplay_button(interaction : discord.Interaction):
-            embed=discord.Embed(title="Autoplay mode has been enabled",color=0xa6e712)
+            embed=discord.Embed(title="Autoplay mode has been enabled",color=discord.Color.blue())
             player.autoplay = wavelink.AutoPlayMode.enabled
             dj_button.style = discord.ButtonStyle.red
             dj_button.label = "Disable DJ mode"
@@ -105,7 +105,7 @@ class Play(commands.Cog):
         # disable autoplay button
 
         async def callback_disable_autoplay_button(interaction : discord.Interaction):
-            embed=discord.Embed(title="Autoplay mode has been disabled",color=0xa6e712)
+            embed=discord.Embed(title="Autoplay mode has been disabled",color=discord.Color.blue())
             player.autoplay = wavelink.AutoPlayMode.disabled
             dj_button.style = discord.ButtonStyle.primary
             dj_button.callback = callback_enable_autoplay_button
@@ -121,7 +121,7 @@ class Play(commands.Cog):
 
         async def callback_pause_button(interaction : discord.Interaction):
             await player.pause(True)
-            embed=discord.Embed(title="The player has been paused",color=0xa6e712)
+            embed=discord.Embed(title="The player has been paused",color=discord.Color.blue())
             pause_button.emoji = "<:resume_button:1303780254242050189>"
             pause_button.label = "resume"
             pause_button.style = discord.ButtonStyle.primary
@@ -138,7 +138,7 @@ class Play(commands.Cog):
             pause_button.emoji = "<:pause_button:1303776999864799313>"
             pause_button.label = "pause"
             pause_button.style = discord.ButtonStyle.green
-            embed=discord.Embed(title="The player has been resumed",color=0xa6e712)
+            embed=discord.Embed(title="The player has been resumed",color=discord.Color.blue())
             await interaction.message.edit(view=view)
             await interaction.response.send_message(embed=embed, ephemeral=True, delete_after=5)
 
@@ -158,11 +158,11 @@ class Play(commands.Cog):
                 player = await ctx.author.voice.channel.connect(cls=wavelink.Player)  # Connecte le bot
                 self.call_user[ctx.author.id] = player  # Ajoute l'utilisateur au dictionnaire
             except AttributeError:
-                embed = discord.Embed(description=f"{ctx.author.mention} You must be in a voice channel to use this command", color=0xa6e712)
+                embed = discord.Embed(description=f"{ctx.author.mention} You must be in a voice channel to use this command", color=discord.Color.blue())
                 await ctx.send(embed=embed, delete_after=5)
                 return
             except discord.ClientException:
-                embed = discord.Embed(description=f"{ctx.author.mention} I'm already connected to a voice channel", color=0xa6e712)
+                embed = discord.Embed(description=f"{ctx.author.mention} I'm already connected to a voice channel", color=discord.Color.blue())
                 await ctx.send(embed=embed, delete_after=3)
                 return
         else:
@@ -182,7 +182,7 @@ class Play(commands.Cog):
         else:
             track: wavelink.Playable = tracks[0]
             milli_duree = str(timedelta(milliseconds=track.length))
-            embed = discord.Embed(title="Ajout de la musique quand la piste", description=f"ajout de **``{track}``** par **``{track.author}``** d'une durée de **``{milli_duree}``** min ", color=0xa6e712)
+            embed = discord.Embed(title="Ajout de la musique dans la piste", description=f"ajout de **``{track}``** par **``{track.author}``** d'une durée de **``{milli_duree}``** min ", color=discord.Color.blue())
             explain_command = f"</explain_play_button:{1304912089558814721}>"
             # Information part
             embed.add_field(name="**Information**",value=f"Pour avoir des explication sur les boutons : \n {explain_command}")
@@ -208,7 +208,7 @@ class Play(commands.Cog):
         if ctx.author.id in self.call_user:
             embed = discord.Embed(
                 description=f"{ctx.author.mention} You are already connected to a voice channel ✅",
-                color=0xa6e712,
+                color=discord.Color.blue(),
             )
             await ctx.send(embed=embed, delete_after=3)
             return
@@ -219,19 +219,19 @@ class Play(commands.Cog):
             self.call_user[ctx.author.id] = voice_client  # Associe l'utilisateur au client vocal
             embed = discord.Embed(
                 description=f"{ctx.author.mention} I'm connected to the voice channel **{voice_channel.name}** ✅",
-                color=0xa6e712,
+                color=discord.Color.blue(),
             )
             await ctx.send(embed=embed, delete_after=3)
         except AttributeError:
             embed = discord.Embed(
                 description=f"{ctx.author.mention} You must be in a voice channel to use this command.",
-                color=0xa6e712,
+                color=discord.Color.blue(),
             )
             await ctx.send(embed=embed, delete_after=5)
         except discord.ClientException:
             embed = discord.Embed(
                 description=f"{ctx.author.mention} I'm already connected to a voice channel.",
-                color=0xa6e712,
+                color=discord.Color.blue(),
             )
             await ctx.send(embed=embed, delete_after=3)
 

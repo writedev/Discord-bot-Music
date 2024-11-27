@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  db:
+    image: mariadb:latest
+    container_name: mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword # Mot de passe pour l'utilisateur root
+      MYSQL_DATABASE: discord_bot # Nom de la base de données par défaut
+      MYSQL_USER: myuser # Utilisateur de la base de données
+      MYSQL_PASSWORD: mypassword # Mot de passe pour l'utilisateur myuser
+    ports:
+      - "3306:3306" # Port MariaDB
+    volumes:
+      - db_data:/var/lib/mysql # Persistance des données
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpmyadmin
+    environment:
+      PMA_HOST: db # Nom du service MariaDB
+      PMA_PORT: 3306 # Port de MariaDB
+      MYSQL_ROOT_PASSWORD: rootpassword # Mot de passe root pour phpMyAdmin
+    ports:
+      - "8080:80" # Port pour accéder à phpMyAdmin via le navigateur
+
+volumes:
+  db_data:
+    driver: local

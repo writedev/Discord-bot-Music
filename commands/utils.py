@@ -10,11 +10,9 @@ class Utils(commands.Cog):
     @commands.hybrid_command()
     async def ping(self, ctx : commands.Context):
         ping = round(self.bot.latency * 1000)
-
         button = discord.ui.Button(label="Ping ",emoji="<:cable:1303389854561996900>", style=discord.ButtonStyle.primary, custom_id="ping")
         view = discord.ui.View()
         view.add_item(button)
-
         async def ping_bouton(interaction : discord.Interaction):
             await interaction.response.send_message(f"Pong! {ping}ms")
         
@@ -23,6 +21,12 @@ class Utils(commands.Cog):
         await ctx.send(self.bot.data)
         volume = self.bot.data + 10
         await ctx.send(volume)
+
+    @commands.command()
+    async def help(self, ctx : commands.Context):
+        embed = discord.Embed(title="Help", color=discord.Color.blue())
+        await ctx.send(embed=embed)
+
 """    @commands.command()
     async def bouton(self,ctx):
         # Création du bouton initial

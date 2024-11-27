@@ -16,7 +16,7 @@ handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w'
 
 class MyBot(commands.Bot):
   def __init__(self):
-    super().__init__(command_prefix="!", intents=discord.Intents.all())
+    super().__init__(command_prefix="!", intents=discord.Intents.all(), help_command=None)
 
   async def on_ready(self):
     print("Bot is ready!")
