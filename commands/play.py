@@ -153,10 +153,15 @@ class Play(commands.Cog):
         view.add_item(high_volume_button)
 
         # Vérifie si l'utilisateur est déjà dans le dictionnaire pour éviter les erreurs
-        if ctx.author.id not in self.call_user:
+        if ctx.author.id not in self.call_user or not ctx.voice_client:
             try:
-                player = await ctx.author.voice.channel.connect(cls=wavelink.Player)  # Connecte le bot
-                self.call_user[ctx.author.id] = player  # Ajoute l'utilisateur au dictionnaire
+                # Si le bot est déjà connecté, déconnecte-le avant de rejoindre
+                if ctx.voice_client:
+                    await ctx.voice_client.disconnect()
+
+                # Connecte le bot au canal vocal de l'utilisateur
+                player = await ctx.author.voice.channel.connect(cls=wavelink.Player)
+                self.call_user[ctx.author.id] = player  # Ajoute/Met à jour l'utilisateur dans le dictionnaire
             except AttributeError:
                 embed = discord.Embed(description=f"{ctx.author.mention} You must be in a voice channel to use this command", color=discord.Color.blue())
                 await ctx.send(embed=embed, delete_after=5)
@@ -167,7 +172,7 @@ class Play(commands.Cog):
                 return
         else:
             player = self.call_user[ctx.author.id]  # Récupère l'instance du joueur existant si déjà connecté
-        # Add track to player
+
 
         tracks: wavelink.Search = await wavelink.Playable.search(query)
 
@@ -196,9 +201,11 @@ class Play(commands.Cog):
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+        player: wavelink.Player = member.guild.voice_client
         if member.id in self.call_user:
             voice_client = self.call_user[member.id]
             if before.channel is not None and after.channel is None:  # Vérifie si l'utilisateur quitte le canal
+                await player.stop()
                 await voice_client.disconnect()  # Déconnecte le bot
                 del self.call_user[member.id]  # Retire l'utilisateur du dictionnaire
 
