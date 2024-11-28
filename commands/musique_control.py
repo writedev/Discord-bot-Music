@@ -107,7 +107,7 @@ class MusiqueControl(commands.Cog):
         embed.set_image(url="https://i.imgur.com/PwLhatP.png")
         await ctx.send(embed=embed)
 
-    """    @commands.Cog.listener()
+    @commands.Cog.listener()
     async def on_wavelink_track_start(self,payload: wavelink.TrackStartEventPayload):
         guild_id = payload.player.guild.id
         if guild_id not in self.history:
@@ -117,7 +117,7 @@ class MusiqueControl(commands.Cog):
 
         # Limite l'historique à 10 chansons par défaut
         if len(self.history[guild_id]) > 10:
-            self.history[guild_id].pop(0)"""
+            self.history[guild_id].pop(0)
     @commands.hybrid_command()
     async def history(self,ctx : commands.Context):
         guild_id = ctx.guild.id

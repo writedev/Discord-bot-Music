@@ -14,7 +14,7 @@ class SearchMenu(discord.ui.View):
         options = [
             discord.SelectOption(
                 label=track.title[:100],
-                description=f"Durée : {str(timedelta(milliseconds=track.length))}",
+                description=f"{track.author}",
                 value=str(i),
             )
             for i, track in enumerate(tracks[:10])  # Limite à 10 résultats
