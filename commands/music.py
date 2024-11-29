@@ -20,14 +20,20 @@ class Play(commands.Cog):
 
         view = discord.ui.View()
 
+
+        """Button creation"""
+
         # low_volume button
 
         low_volume_button = discord.ui.Button(label="volume",emoji="<:low_volume:1304587618947956749>", style=discord.ButtonStyle.green)
 
         async def callback_low_volume_button(interaction : discord.Interaction):
-            volume = player.volume - 10
+            if player.volume == 10:
+                volume = 5
+            else:
+                volume = player.volume - 10
             await player.set_volume(volume)
-            embed=discord.Embed(title=f"Volume has been lowered, the volume is **{volume}**",color=discord.Color.blue())
+            embed=discord.Embed(title=f"Volume has been lowered, the volume is **{player.volume}**",color=discord.Color.blue())
             await interaction.response.send_message(embed=embed, ephemeral=True, delete_after=5)
 
         low_volume_button.callback = callback_low_volume_button
@@ -151,7 +157,8 @@ class Play(commands.Cog):
         view.add_item(dj_button)
         view.add_item(low_volume_button)
         view.add_item(high_volume_button)
-
+        
+        """start a play part"""
         # Vérifie si l'utilisateur est déjà dans le dictionnaire pour éviter les erreurs
         if ctx.author.id not in self.call_user or not ctx.voice_client:
             try:
@@ -241,6 +248,52 @@ class Play(commands.Cog):
                 color=discord.Color.blue(),
             )
             await ctx.send(embed=embed, delete_after=3)
+    
+    @commands.command(name="search")
+    async def search(self, ctx : commands.Context, *, query: str):
+        """Searches for tracks and allows the user to select one."""
+        tracks = await wavelink.Playable.search(query)
+
+        if not tracks:
+            await ctx.send("No results found.")
+            return
+
+        # Crée une liste d'options pour le menu Select avec numérotation
+        options = [
+            discord.SelectOption(
+                label=f"{i + 1}. {track.title[:90]}",  # Limite à 90 caractères pour éviter des dépassements
+                description=f"{track.author}",
+                value=str(i)  # Utiliser l'index comme valeur
+            )
+            for i, track in enumerate(tracks[:10])  # Limiter à 10 résultats
+        ]
+
+        # Créer le menu déroulant (Select)
+        select = discord.ui.Select(placeholder="Choose a track", options=options)
+
+        async def select_callback(interaction : discord.Interaction):
+            # Récupérer la piste sélectionnée
+            index = int(select.values[0])
+            selected_track = tracks[index]
+
+            # Se connecter au canal vocal et jouer la piste
+            if not ctx.author.voice or not ctx.author.voice.channel:
+                await interaction.response.send_message("Vous devez être dans un canal vocal pour jouer de la musique.", ephemeral=True)
+                return
+            await self.play(ctx, query=selected_track.uri)
+            await message.delete()
+            
+
+        select.callback = select_callback
+
+        # Envoyer l'embed avec la liste des pistes et le menu déroulant
+        embed = discord.Embed(title="Pick a track you want to queue", color=discord.Color.blurple())
+        embed.description = "\n".join(
+            [f"**``{i + 1}.``**      **``{str(timedelta(milliseconds=track.length))}``**       **[{track.title}]({track.uri})** " for i, track in enumerate(tracks[:10])]
+        )
+        view = discord.ui.View()
+        view.add_item(select)
+        message = await ctx.send(embed=embed, view=view)
 
 async def setup(bot):
     await bot.add_cog(Play(bot))

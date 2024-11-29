@@ -5,6 +5,37 @@ from typing import cast
 import wavelink
 from datetime import timedelta
 
+class SearchMenu(discord.ui.View):
+    def __init__(self, tracks, ctx):
+        super().__init__(timeout=60)
+        self.tracks = tracks
+        self.ctx = ctx
+
+        # Ajoute les chansons comme options du menu déroulant
+        options = [
+            discord.SelectOption(
+                label=track.title[:100],
+                description=f"{track.author}",
+                value=str(i),
+            )
+            for i, track in enumerate(tracks[:10])  # Limite à 10 résultats
+        ]
+        self.add_item(SearchSelect(options, tracks, ctx))
+
+
+class SearchSelect(discord.ui.Select):
+    def __init__(self, options, tracks, ctx):
+        super().__init__(placeholder="Sélectionnez une chanson...", options=options)
+        self.tracks = tracks
+        self.ctx = ctx
+
+    async def callback(self, interaction: discord.Interaction):
+        # Récupère la chanson sélectionnée
+        selected_track = self.tracks[int(self.values[0])]
+
+        # Envoie le titre et le lien dans le canal texte
+        await interaction.response.send_message(f"[{selected_track.title}]({selected_track.uri})", ephemeral=False)
+
 
 class MusiqueControl(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -118,6 +149,7 @@ class MusiqueControl(commands.Cog):
         # Limite l'historique à 10 chansons par défaut
         if len(self.history[guild_id]) > 10:
             self.history[guild_id].pop(0)
+
     @commands.hybrid_command()
     async def history(self,ctx : commands.Context):
         guild_id = ctx.guild.id
@@ -135,6 +167,52 @@ class MusiqueControl(commands.Cog):
             color=discord.Color.blue(),
         )
         await ctx.send(embed=embed)
+
+"""    @commands.command(name="search")
+    async def search(self, ctx : commands.Context, *, query: str):
+        Searches for tracks and allows the user to select one.
+        tracks = await wavelink.Playable.search(query)
+
+        if not tracks:
+            await ctx.send("No results found.")
+            return
+
+        # Crée une liste d'options pour le menu Select avec numérotation
+        options = [
+            discord.SelectOption(
+                label=f"{i + 1}. {track.title[:90]}",  # Limite à 90 caractères pour éviter des dépassements
+                description=f"{track.author}",
+                value=str(i)  # Utiliser l'index comme valeur
+            )
+            for i, track in enumerate(tracks[:10])  # Limiter à 10 résultats
+        ]
+
+        # Créer le menu déroulant (Select)
+        select = discord.ui.Select(placeholder="Choose a track", options=options)
+
+        async def select_callback(interaction : discord.Interaction):
+            # Récupérer la piste sélectionnée
+            index = int(select.values[0])
+            selected_track = tracks[index]
+
+            # Se connecter au canal vocal et jouer la piste
+            if not ctx.author.voice or not ctx.author.voice.channel:
+                await interaction.response.send_message("Vous devez être dans un canal vocal pour jouer de la musique.", ephemeral=True)
+                return
+            await Play.play(ctx, query=selected_track.uri)
+            
+
+        select.callback = select_callback
+
+        # Envoyer l'embed avec la liste des pistes et le menu déroulant
+        embed = discord.Embed(title="Pick a track you want to queue", color=discord.Color.blurple())
+        embed.description = "\n".join(
+            [f"**``{i + 1}.``**      **``{str(timedelta(milliseconds=track.length))}``**       **[{track.title}]({track.uri})** " for i, track in enumerate(tracks[:10])]
+        )
+        view = discord.ui.View()
+        view.add_item(select)
+        await ctx.send(embed=embed, view=view)"""
+
 
 # search commande 
 
